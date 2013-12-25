@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">BatteryStatus</string>
+    <string name="glass_voice_trigger">battery status</string>
+
+</resources>

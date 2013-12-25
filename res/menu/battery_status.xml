@@ -1,0 +1,8 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/read_status"
+        android:icon="@drawable/ic_microphone_on_50"
+        android:title="read status"/>
+
+</menu>
