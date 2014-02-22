@@ -48,11 +48,11 @@ public class BatteryStatusActivity extends Activity {
 
 		final String chargeText;
 		if (Math.round(batteryPct * 100) >= 99) {
-			chargeText = "Full";
+			chargeText = "charged";
 		} else if (Math.round(batteryPct * 100) <= 2) {
-			chargeText = "Empty";
+			chargeText = "empty";
 		} else {
-			chargeText = Math.round(batteryPct * 100) + "% Charged";
+			chargeText = Math.round(batteryPct * 100) + "% charged";
 		}
 
 		// TODO Calculation of drain to hours
