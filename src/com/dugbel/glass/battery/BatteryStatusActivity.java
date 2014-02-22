@@ -1,15 +1,13 @@
 package com.dugbel.glass.battery;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.widget.TextView;
+
+import com.google.android.glass.app.Card;
 
 /**
  * Activity that checks the battery status outputs it to a card then reads it aloud
@@ -19,18 +17,9 @@ import android.widget.TextView;
  */
 public class BatteryStatusActivity extends Activity {
 
-	/** */
-	private static final String TAG = "BatteryStatusActivity";
-	
-	/** */
-	private Context context = this;
-
-	/** */
+	/** TextToSpeech instance */
 	private TextToSpeech speech;
-	
-	/** */
-	private String statusText;
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
@@ -38,10 +27,10 @@ public class BatteryStatusActivity extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState)  {
 		super.onCreate(savedInstanceState);
-		
+
 		final IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-		final Intent batteryStatus = context.registerReceiver(null, ifilter);
-		
+		final Intent batteryStatus = this.registerReceiver(null, ifilter);
+
 		// Are we charging / charged?
 		final int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
 		final boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING;
@@ -51,20 +40,23 @@ public class BatteryStatusActivity extends Activity {
 		final int chargePlug = batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
 		final boolean usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB;
 		final boolean acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
-		
+
 		// Battery Level
 		final int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
 		final int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
 		final float batteryPct = level / (float)scale;
-		
-		statusText = Math.round(batteryPct * 100) + "% Charged";
-		
+
+		final String chargeText;
+		if (Math.round(batteryPct * 100) >= 99) {
+			chargeText = "Full";
+		} else if (Math.round(batteryPct * 100) <= 2) {
+			chargeText = "Empty";
+		} else {
+			chargeText = Math.round(batteryPct * 100) + "% Charged";
+		}
+
 		// TODO Calculation of drain to hours
-		
-		setContentView(R.layout.activity_battery_status);
-		TextView statusTextView = (TextView) findViewById(R.id.status_text);
-		statusTextView.setText(statusText);
-	
+
 		final StringBuilder footnote = new StringBuilder();
 		if (isCharging) {
 			footnote.append("charging");
@@ -79,10 +71,27 @@ public class BatteryStatusActivity extends Activity {
 		} else if (!isCharging) {
 			footnote.append("not charging");
 		}
+
+		// Set the Card text and image
+		final Card card = new Card(this);
+		card.setText("The battery is " + chargeText);
 	
-		TextView footnoteTextView = (TextView) findViewById(R.id.footnote_text);
-		footnoteTextView.setText(footnote.toString());
-		
+		card.setFootnote(footnote.toString());
+		card.setImageLayout(Card.ImageLayout.LEFT);
+
+		if (batteryPct == 1.0) {
+			card.addImage(R.drawable.ic_battery_100);
+		} else if (batteryPct > .5) {
+			card.addImage(R.drawable.ic_battery_75);
+		} else if (batteryPct > .2) {
+			card.addImage(R.drawable.ic_battery_50);
+		} else {
+			card.addImage(R.drawable.ic_battery_20);
+		}
+
+		setContentView(card.toView());
+
+		final String text = "The battery is " + chargeText;
 		speech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
 			/*
 			 * (non-Javadoc)
@@ -90,10 +99,10 @@ public class BatteryStatusActivity extends Activity {
 			 */
 			@Override
 			public void onInit(int status) {
-				speech.speak("The battery is " + statusText, TextToSpeech.QUEUE_FLUSH, null);
+				speech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
 			}
 		});
-		
+
 	}
 
 	/*
@@ -109,20 +118,4 @@ public class BatteryStatusActivity extends Activity {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see android.app.Activity#onKeyDown(int, android.view.KeyEvent)
-	 */
-	@Override 
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		switch (keyCode) {
-			case KeyEvent.KEYCODE_DPAD_CENTER:
-			case KeyEvent.KEYCODE_ENTER:
-				Log.v(TAG, "reading battery state");
-				speech.speak(statusText, TextToSpeech.QUEUE_FLUSH, null);
-				return true;
-			default:
-				return super.onKeyDown(keyCode, event);
-		}
-	}
 }
