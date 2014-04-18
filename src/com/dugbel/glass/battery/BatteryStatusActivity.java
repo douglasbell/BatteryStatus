@@ -89,7 +89,7 @@ public class BatteryStatusActivity extends Activity {
 			card.addImage(R.drawable.ic_battery_20);
 		}
 
-		setContentView(card.toView());
+		setContentView(card.getView());
 
 		final String text = "The battery is " + chargeText;
 		speech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
